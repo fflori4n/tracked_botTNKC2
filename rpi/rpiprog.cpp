@@ -173,20 +173,25 @@ string comArduino(string outmsg = ""){
 			}
 		}                      
 		// write port configuration, as ' stty -F /dev/ttyUSB0 -a ' returned after opening the port with the arduino IDE.
+		tcgetattr(fd_ard, &PortConf);                                     // Get the current attributes of the Serial port
+
 		PortConf.c_cflag = 0;								  //set cflag
 		PortConf.c_cflag |= (CS8 | HUPCL | CREAD | CLOCAL);
 
 		PortConf.c_iflag = 0;								  //set iflag
+		PortConf.c_iflag &= ~(ISIG | ICANON | IEXTEN);
 
 		PortConf.c_oflag = 0;								  //set oflag
 		PortConf.c_oflag |= (ONLCR | CR0 | TAB0 | BS0 | VT0 | FF0); //NR0 is supposed to be set, but won't compile
+		PortConf.c_oflag &= ~(OPOST);
 
 		PortConf.c_lflag = 0;								  //set lflag
+		PortConf.c_lflag &= ~(ECHO | ECHOE);
 
 		PortConf.c_cc[VMIN]  = 0;
 		PortConf.c_cc[VTIME] = 0;
 
-		tcgetattr(fd_ard, &PortConf); 					  // Get the current attributes of the Serial port
+		//tcgetattr(fd_ard, &PortConf); 					  // Get the current attributes of the Serial port
 		cfsetispeed(&PortConf,B115200); 					  // Set Read  Speed as 115200                       
 		cfsetospeed(&PortConf,B115200); 					  // Set Write Speed as 115200 
 
