@@ -152,7 +152,7 @@ string comArduino(string outmsg = ""){
 	
 	if(!init || fd_ard == 0){
 
-		struct termios SerialPortSettings;  						  // Create terminos struct   
+		struct termios PortConf;  						  // Create terminos struct   
 		string comports[] = { "/dev/ttyUSB0","/dev/ttyUSB1","/dev/ttyUSB2" };
 
 		for(int i = 0; i < comports_size; i++){
@@ -172,11 +172,25 @@ string comArduino(string outmsg = ""){
 				return "";
 			}
 		}                      
-		tcgetattr(fd_ard, &SerialPortSettings); 					  // Get the current attributes of the Serial port
-		cfsetispeed(&SerialPortSettings,B115200); 					  // Set Read  Speed as 115200                       
-		cfsetospeed(&SerialPortSettings,B115200); 					  // Set Write Speed as 115200  
+		// write port configuration, as ' stty -F /dev/ttyUSB0 -a ' returned after opening the port with the arduino IDE.
+		PortConf.c_cflag = 0;								  //set cflag
+		PortConf.c_cflag |= (CS8 | HUPCL | CREAD | CLOCAL);
 
-		if((tcsetattr(fd_ard,TCSANOW,&SerialPortSettings)) != 0){ 	  // Set the attributes to the termios structure
+		PortConf.c_iflag = 0;								  //set iflag
+
+		PortConf.c_oflag = 0;								  //set oflag
+		PortConf.c_oflag |= (ONLCR | CR0 | TAB0 | BS0 | VT0 | FF0); //NR0 is supposed to be set, but won't compile
+
+		PortConf.c_lflag = 0;								  //set lflag
+
+		PortConf.c_cc[VMIN]  = 0;
+		PortConf.c_cc[VTIME] = 0;
+
+		tcgetattr(fd_ard, &PortConf); 					  // Get the current attributes of the Serial port
+		cfsetispeed(&PortConf,B115200); 					  // Set Read  Speed as 115200                       
+		cfsetospeed(&PortConf,B115200); 					  // Set Write Speed as 115200 
+
+		if((tcsetattr(fd_ard,TCSANOW,&PortConf)) != 0){ 	  // Set the attributes to the termios structure
   			printf("Error while setting attributes \n");
 			return "";
 		}
@@ -200,11 +214,12 @@ string comArduino(string outmsg = ""){
 		for(int i= 0; i < 10; i++){
 			Er = read(fd_ard, buffer, sizeof(buffer));
 			if(Er < 0 && errno != EAGAIN){
-				usleep(10000); 
 				perror("read ");
+				usleep(10000); 
 			}
 			else
 				return buffer;
+			usleep(10000); 
 		}
 	}
 }
