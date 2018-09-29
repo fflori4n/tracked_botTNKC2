@@ -2,6 +2,7 @@
 // add fadeing of points
 // fill polygon finaly
 // close polygon
+//sudo apt-get install libcairo2-dev
 
 #include <cairo.h>
 #include <gtk/gtk.h>
@@ -21,11 +22,20 @@
 #include <thread>
 #include <vector>
 
+
+#include <netdb.h> 
+#include <string>
+#include <fcntl.h>
+
+#include "TCP_nbclient.h"
+
 #define angleoffset 30
 #define dispx_defofset 2300
 #define dispy_defofset 2000
 
 #define mapfile "clear_map.txt"
+
+bool manctrl_enbld = true;
 
 using namespace std;
 
@@ -80,7 +90,7 @@ vector< vector <Point >> read_map_file(){
 				size_t lastdel = line.find_first_of(" ");
 				inf =line.substr(0,(lastdel));
 				line =line.substr((lastdel+1),line.size());
-				cout<<" -LOOP- "<<endl;
+				//cout<<" -LOOP- "<<endl;
 			}
 			if(inf.size() > 0){
 				//cout<<inf<<"-- "<<endl;
@@ -88,7 +98,7 @@ vector< vector <Point >> read_map_file(){
 					try{
 						double xcord = stod(inf.substr(0,(inf.find_first_of(";"))));
 						double ycord = stod(inf.substr((inf.find_first_of(";") + 1 ),inf.size()));
-						cout<<xcord<<" "<<ycord<<endl;
+						//cout<<xcord<<" "<<ycord<<endl;
 						onecontour.push_back(Point({xcord, ycord}));
 					}
 					catch(...) {
@@ -123,9 +133,6 @@ void do_drawing(cairo_t *cr){
 	// read from file
 	if(read_map_file().size() > 0)
 		clearborder = read_map_file();
-	/*clearborder[0].push_back(Point({0, 0}));
-	clearborder[0].push_back(Point({600, 0}));
-	clearborder[0].push_back(Point({200, 500}));*/
 	float xtotal = (0 + disp_xoffset + dispx_defofset);
 	float ytotal = (0 + disp_yoffset + dispy_defofset);
 	for(int j = 0; (clearborder.size() != 0 ) && (j < clearborder.size()); j++){
@@ -203,8 +210,22 @@ void on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data){
 	gtk_widget_queue_draw(window);
 }
 
-int main2(){
-	// get new points
+int main2(){	// get new points
+	string man_cmd = "";
+	while(1){
+		read_joy();
+		man_cmd = console_input();
+		if(strlen(man_cmd.c_str()) > 2){
+			cout<<"\e[33m  MANUAL OVERRIDE !  [ Wr ]\e[39m"<<endl;
+			sendrcv_TCP(man_cmd);
+		}
+		
+		cout<<"hello world!"<<endl;
+		sleep(1);
+		//sendrcv_TCP("hello");
+		cout<<sendrcv_TCP();
+	}
+	
 }
 int GUI(int argc, char *argv[]){
 	for(;;){
